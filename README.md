@@ -110,6 +110,27 @@ docker compose -f docker/compose.yml run --rm api pnpm db:seed
 
 Caddy 负责 80/443 入口与自动 HTTPS：`/api/*` 转发到 API，其余转发到 Web；MySQL 不暴露公网端口。
 
+## Vercel 部署（仅前端）
+
+Vercel 只托管 `apps/web`，API 与 MySQL 需要部署在能访问数据库的服务器上（推荐上面的 Docker 方案），并且对公网可达。
+
+1. 在 Vercel 导入本仓库。
+2. 项目设置 → **Root Directory** 选择 `apps/web`。这一步必须做：仓库根目录的 `package.json` 没有 `next` 依赖，留在根目录会报 `NEXT_NO_VERSION`。仓库根目录不再放 `vercel.json`，避免 Vercel 在根目录按 Next.js 项目解析。
+3. Framework Preset 保持 **Next.js**，Node.js 版本选择 **22.x**。
+4. 在 Environment Variables 中配置：
+
+   | 变量 | 说明 |
+   | --- | --- |
+   | `INTERNAL_API_URL` | 构建期与 SSR 访问 API 的地址，例如 `https://api.example.com/api/v1`。Vercel 构建时会请求它生成静态页面，必须公网可达 |
+   | `NEXT_PUBLIC_API_URL` | 浏览器访问 API 的地址，例如 `https://api.example.com/api/v1` |
+   | `NEXT_PUBLIC_SITE_URL` | 站点正式域名，例如 `https://example.com`，用于 canonical、sitemap、RSS |
+   | `REVALIDATE_SECRET` | 与 API 端一致的缓存失效密钥 |
+   | `NEXT_IMAGE_HOSTS` | 可选，`next/image` 允许的图片域名，逗号分隔，不含协议 |
+
+5. 构建命令由 `apps/web/vercel.json` 提供，会先构建 `packages/shared` 再构建 web，无需在 Dashboard 手动填写。
+
+> 构建期数据来自真实 API。若 `INTERNAL_API_URL` 不可达，`Generating static pages` 阶段会失败；这不是框架配置问题，先确认 API 已部署且允许来自 Vercel 的访问。
+
 ## 测试
 
 - 单元测试使用 Vitest，覆盖共享工具、Markdown 清洗（XSS）、日期格式化、登录锁定与令牌重放、留言限流、图片类型识别、预览令牌。

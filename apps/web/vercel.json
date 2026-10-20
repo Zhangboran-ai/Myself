@@ -1,10 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @myself/shared build && pnpm --filter @myself/web build",
-  "outputDirectory": "apps/web/.next",
-  "regions": ["hkg1"],
   "headers": [
     {
       "source": "/(.*)",
@@ -20,14 +17,18 @@
     },
     {
       "source": "/og-default.svg",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
     },
     {
       "source": "/favicon.svg",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
     },
     {
-      "source": "/admin/(.*)",
+      "source": "/admin/:path*",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
   ]
