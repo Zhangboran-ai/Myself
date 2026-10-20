@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0f1c"/>
+      <stop offset="55%" stop-color="#070a12"/>
+      <stop offset="100%" stop-color="#0d0a18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#6ea8fe" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#a78bfa" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#070a12" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="text" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e8eef9"/>
+      <stop offset="55%" stop-color="#6ea8fe"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g fill="#ffffff">
+    <circle cx="120" cy="110" r="1.8" opacity="0.5"/>
+    <circle cx="260" cy="70" r="1.2" opacity="0.4"/>
+    <circle cx="420" cy="150" r="2" opacity="0.35"/>
+    <circle cx="980" cy="120" r="1.6" opacity="0.5"/>
+    <circle cx="1090" cy="200" r="1.2" opacity="0.4"/>
+    <circle cx="880" cy="520" r="1.8" opacity="0.35"/>
+    <circle cx="180" cy="500" r="1.4" opacity="0.4"/>
+    <circle cx="620" cy="90" r="1" opacity="0.3"/>
+  </g>
+  <text x="100" y="250" font-family="Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="28" letter-spacing="6" fill="#6b7a93">PORTFOLIO / 2026</text>
+  <text x="96" y="360" font-family="Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="88" font-weight="700" fill="url(#text)">林深</text>
+  <text x="100" y="430" font-family="Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="32" fill="#a3b0c6">前端工程师 · 关注交互与性能</text>
+  <line x1="100" y1="500" x2="320" y2="500" stroke="#6ea8fe" stroke-opacity="0.5" stroke-width="2"/>
+  <text x="100" y="552" font-family="Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="22" fill="#6b7a93">项目 · 技能 · 文章</text>
+</svg>

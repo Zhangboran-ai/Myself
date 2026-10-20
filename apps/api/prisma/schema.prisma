@@ -1,0 +1,333 @@
+// 个人展示网站数据模型
+// 约定：所有时间存 UTC，所有文本 utf8mb4，表名/列名 snake_case。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  EDITOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProjectStatus {
+  LIVE
+  OSS
+  ARCHIVED
+}
+
+enum SkillLevel {
+  PROFICIENT
+  FAMILIAR
+  LEARNING
+}
+
+enum ExperienceKind {
+  WORK
+  EDUCATION
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  SPAM
+}
+
+enum RevalidateStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(120)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  displayName  String   @map("display_name") @db.VarChar(50)
+  avatarUrl    String?  @map("avatar_url") @db.VarChar(500)
+  role         Role     @default(OWNER)
+  lastLoginAt  DateTime? @map("last_login_at") @db.DateTime(3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt    DateTime? @map("deleted_at") @db.DateTime(3)
+
+  posts         Post[]
+  refreshTokens RefreshToken[]
+  revisions     PostRevision[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt    @map("user_id")
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  userAgent String?   @map("user_agent") @db.VarChar(300)
+  ipHash    String?   @map("ip_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.DateTime(3)
+  revokedAt DateTime? @map("revoked_at") @db.DateTime(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Profile {
+  id              Int      @id
+  name            String   @db.VarChar(50)
+  handle          String   @db.VarChar(50)
+  headline        String   @db.VarChar(120)
+  bioMd           String   @map("bio_md") @db.Text
+  avatarUrl       String?  @map("avatar_url") @db.VarChar(500)
+  location        String?  @db.VarChar(100)
+  statusLabel     String?  @map("status_label") @db.VarChar(60)
+  statusAvailable Boolean  @default(true) @map("status_available")
+  email           String   @db.VarChar(120)
+  resumeUrl       String?  @map("resume_url") @db.VarChar(500)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@map("profiles")
+}
+
+model SocialLink {
+  id        BigInt  @id @default(autoincrement())
+  label     String  @db.VarChar(50)
+  href      String  @db.VarChar(500)
+  icon      String  @db.VarChar(50)
+  sortOrder Int     @default(0) @map("sort_order")
+  visible   Boolean @default(true)
+
+  @@map("social_links")
+}
+
+model Experience {
+  id        BigInt         @id @default(autoincrement())
+  company   String         @db.VarChar(100)
+  role      String         @db.VarChar(100)
+  startDate DateTime       @map("start_date") @db.Date
+  endDate   DateTime?      @map("end_date") @db.Date
+  summary   String?        @db.VarChar(500)
+  kind      ExperienceKind @default(WORK)
+  sortOrder Int            @default(0) @map("sort_order")
+  visible   Boolean        @default(true)
+
+  @@map("experiences")
+}
+
+model SkillGroup {
+  id        BigInt  @id @default(autoincrement())
+  name      String  @db.VarChar(50)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  skills Skill[]
+
+  @@map("skill_groups")
+}
+
+model Skill {
+  id        BigInt     @id @default(autoincrement())
+  groupId   BigInt     @map("group_id")
+  name      String     @db.VarChar(50)
+  level     SkillLevel @default(FAMILIAR)
+  note      String?    @db.VarChar(200)
+  icon      String?    @db.VarChar(50)
+  sortOrder Int        @default(0) @map("sort_order")
+
+  group SkillGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, sortOrder])
+  @@map("skills")
+}
+
+model Project {
+  id            BigInt        @id @default(autoincrement())
+  slug          String        @unique @db.VarChar(160)
+  title         String        @db.VarChar(200)
+  summary       String        @db.VarChar(300)
+  bodyMd        String        @map("body_md") @db.MediumText
+  coverUrl      String?       @map("cover_url") @db.VarChar(500)
+  coverBlurhash String?       @map("cover_blurhash") @db.VarChar(100)
+  role          String?       @db.VarChar(100)
+  year          Int
+  status        ProjectStatus @default(LIVE)
+  featured      Boolean       @default(false)
+  demoUrl       String?       @map("demo_url") @db.VarChar(500)
+  repoUrl       String?       @map("repo_url") @db.VarChar(500)
+  sortOrder     Int           @default(0) @map("sort_order")
+  viewCount     BigInt        @default(0) @map("view_count")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?     @map("deleted_at") @db.DateTime(3)
+
+  tech ProjectTechTag[]
+
+  @@index([featured, sortOrder], map: "idx_projects_featured")
+  @@index([year(sort: Desc)], map: "idx_projects_year")
+  @@map("projects")
+}
+
+model TechTag {
+  id   BigInt @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+  slug String @unique @db.VarChar(60)
+
+  projects ProjectTechTag[]
+
+  @@map("tech_tags")
+}
+
+model ProjectTechTag {
+  projectId BigInt @map("project_id")
+  techTagId BigInt @map("tech_tag_id")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  techTag TechTag @relation(fields: [techTagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, techTagId])
+  @@index([techTagId])
+  @@map("project_tech_tags")
+}
+
+model Post {
+  id          BigInt     @id @default(autoincrement())
+  slug        String     @unique @db.VarChar(160)
+  title       String     @db.VarChar(200)
+  summary     String     @db.VarChar(300)
+  bodyMd      String     @map("body_md") @db.MediumText
+  coverUrl    String?    @map("cover_url") @db.VarChar(500)
+  authorId    BigInt     @map("author_id")
+  status      PostStatus @default(DRAFT)
+  pinned      Boolean    @default(false)
+  readingTime Int        @default(0) @map("reading_time") @db.UnsignedSmallInt
+  wordCount   Int        @default(0) @map("word_count") @db.UnsignedInt
+  viewCount   BigInt     @default(0) @map("view_count") @db.UnsignedBigInt
+  publishedAt DateTime?  @map("published_at") @db.DateTime(3)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt   DateTime?  @map("deleted_at") @db.DateTime(3)
+
+  author   User           @relation(fields: [authorId], references: [id])
+  tags     PostTag[]
+  revisions PostRevision[]
+
+  @@index([status, publishedAt(sort: Desc)], map: "idx_posts_status_published")
+  @@index([pinned, publishedAt(sort: Desc)], map: "idx_posts_pinned")
+  @@map("posts")
+}
+
+model Tag {
+  id        BigInt @id @default(autoincrement())
+  name      String @unique @db.VarChar(50)
+  slug      String @unique @db.VarChar(60)
+  postCount Int    @default(0) @map("post_count")
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model PostTag {
+  postId BigInt @map("post_id")
+  tagId  BigInt @map("tag_id")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
+model PostRevision {
+  id        BigInt   @id @default(autoincrement())
+  postId    BigInt   @map("post_id")
+  title     String   @db.VarChar(200)
+  bodyMd    String   @map("body_md") @db.MediumText
+  editorId  BigInt   @map("editor_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  editor User @relation(fields: [editorId], references: [id])
+
+  @@index([postId, createdAt(sort: Desc)])
+  @@map("post_revisions")
+}
+
+model Media {
+  id         BigInt   @id @default(autoincrement())
+  storageKey String   @unique @map("storage_key") @db.VarChar(300)
+  url        String   @db.VarChar(500)
+  mime       String   @db.VarChar(80)
+  size       Int
+  width      Int?
+  height     Int?
+  blurhash   String?  @db.VarChar(100)
+  checksum   String   @unique @db.Char(64)
+  alt        String?  @db.VarChar(200)
+  createdBy  BigInt?  @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@map("media")
+}
+
+model ContactMessage {
+  id        BigInt        @id @default(autoincrement())
+  name      String        @db.VarChar(50)
+  email     String        @db.VarChar(120)
+  subject   String        @db.VarChar(120)
+  content   String        @db.Text
+  ipHash    String?       @map("ip_hash") @db.Char(64)
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("contact_messages")
+}
+
+model SlugRedirect {
+  id         BigInt   @id @default(autoincrement())
+  entityType String   @map("entity_type") @db.VarChar(20)
+  oldSlug    String   @map("old_slug") @db.VarChar(160)
+  newSlug    String   @map("new_slug") @db.VarChar(160)
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@unique([entityType, oldSlug], map: "uk_slug_redirects_type_old")
+  @@map("slug_redirects")
+}
+
+model SiteSetting {
+  settingKey String   @id @map("setting_key") @db.VarChar(60)
+  value      Json
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@map("site_settings")
+}
+
+model RevalidateJob {
+  id        BigInt           @id @default(autoincrement())
+  targetTag String           @map("target_tag") @db.VarChar(120)
+  payload   Json?
+  attempts  Int              @default(0) @db.UnsignedTinyInt
+  status    RevalidateStatus @default(PENDING)
+  nextRunAt DateTime         @default(now()) @map("next_run_at") @db.DateTime(3)
+  createdAt DateTime         @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@index([status, nextRunAt])
+  @@map("revalidate_jobs")
+}

@@ -1,0 +1,38 @@
+# 前端镜像：Next.js standalone 输出
+FROM node:22-alpine AS base
+RUN corepack enable
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY packages ./packages
+COPY apps/web ./apps/web
+ARG NEXT_PUBLIC_API_URL=/api/v1
+ARG NEXT_PUBLIC_SITE_URL=http://localhost
+ARG NEXT_IMAGE_HOSTS=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_IMAGE_HOSTS=$NEXT_IMAGE_HOSTS \
+    NEXT_OUTPUT_STANDALONE=1 \
+    NEXT_TELEMETRY_DISABLED=1
+RUN pnpm --filter @myself/shared build && pnpm --filter @myself/web build
+
+FROM base AS runner
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+COPY --from=build /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build /app/apps/web/public ./apps/web/public
+# standalone 里对 workspace 包的符号链接仍指向 packages/shared，需要一并复制。
+COPY --from=build /app/packages/shared ./packages/shared
+
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]

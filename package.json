@@ -1,0 +1,38 @@
+{
+  "name": "myself",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "overrides": {
+      "fastify": "5.11.3"
+    }
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:api": "pnpm --filter @myself/api dev",
+    "dev:web": "pnpm --filter @myself/web dev",
+    "build": "pnpm --filter @myself/shared build && pnpm --filter @myself/api build && pnpm --filter @myself/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "db:migrate": "pnpm --filter @myself/api prisma migrate dev",
+    "db:deploy": "pnpm --filter @myself/api prisma migrate deploy",
+    "db:seed": "pnpm --filter @myself/api db:seed",
+    "db:studio": "pnpm --filter @myself/api prisma studio",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@next/eslint-plugin-next": "^15.5.28",
+    "@playwright/test": "^1.64.1",
+    "eslint": "^9",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "typescript-eslint": "^8.72.0"
+  }
+}
