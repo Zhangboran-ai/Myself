@@ -121,7 +121,7 @@ Vercel 只托管 `apps/web`，API 与 MySQL 需要部署在能访问数据库的
 
    | 变量 | 说明 |
    | --- | --- |
-   | `INTERNAL_API_URL` | 构建期与 SSR 访问 API 的地址，例如 `https://api.example.com/api/v1`。Vercel 构建时会请求它生成静态页面，必须公网可达 |
+   | `INTERNAL_API_URL` | 构建期与 SSR 访问 API 的地址，例如 `https://api.example.com/api/v1`。未配置或不可达时使用内置示例内容 |
    | `NEXT_PUBLIC_API_URL` | 浏览器访问 API 的地址，例如 `https://api.example.com/api/v1` |
    | `NEXT_PUBLIC_SITE_URL` | 站点正式域名，例如 `https://example.com`，用于 canonical、sitemap、RSS |
    | `REVALIDATE_SECRET` | 与 API 端一致的缓存失效密钥 |
@@ -129,7 +129,7 @@ Vercel 只托管 `apps/web`，API 与 MySQL 需要部署在能访问数据库的
 
 5. 构建命令由 `apps/web/vercel.json` 提供，会先构建 `packages/shared` 再构建 web，无需在 Dashboard 手动填写。
 
-> 构建期数据来自真实 API。若 `INTERNAL_API_URL` 不可达，`Generating static pages` 阶段会失败；这不是框架配置问题，先确认 API 已部署且允许来自 Vercel 的访问。
+> 如果只想先让前端上线、暂时没有可访问的 API，可以不配置 `INTERNAL_API_URL`：构建和公开页面会使用 `apps/web/src/lib/demo-content.ts` 的内置示例内容，站点可以正常访问；配置真实 API 后会自动改用数据库内容（构建期生成 + ISR 重新验证）。后台 `/admin` 依赖 API 与数据库，不参与兜底。
 
 ## 测试
 
